@@ -37,6 +37,7 @@
 \usepackage{mathtools}
 \usepackage[mathrm=sym]{unicode-math}
 \usepackage{relsize}
+\usepackage{listings}
 
 \usepackage[
   locale=DE,                 % deutsche Einstellungen
@@ -73,11 +74,15 @@
 
 \tikzstyle{decision} = [rectangle, draw, fill=tucitron!20, 
     text width=15em, text centered, rounded corners, minimum height=2em]
+\tikzstyle{onlytext} = [rectangle, draw=none, 
+    text width=15em, text centered, rounded corners, minimum height=2em]
 \tikzstyle{block} = [rectangle, draw, fill=tugreen!20, 
     text width=20em, text centered, rounded corners, minimum height=2em]
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,
     minimum height=2em]
+\tikzstyle{blocksmall} = [rectangle, draw, fill=tugreen!20, 
+    text width=10em, text centered, rounded corners, minimum height=2em]
 
 \setbeamertemplate{caption}{\raggedright\insertcaption\par}
 
@@ -98,7 +103,14 @@
 \newcommand\CC{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\relsize{-3}{\textbf{++}}}\:}
 %\titlegraphic{\includegraphics[height=0.4\textheight]{example-image-a}}
 
+\usepackage{color}
+\newcommand{\Hilight}{\makebox[0pt][l]{\color{tugreen}\rule[-4pt]{0.65\linewidth}{14pt}}}
+
 \begin{document}
+
+
+
+%%% TITLE
 
 \begin{frame}
   \maketitle
@@ -112,16 +124,13 @@
     \begin{center}
       \begin{itemize}
         \setlength\itemsep{0.5em}
-        \item \textbf{PROPOSAL}: Tool to propagate charged leptons
+        \item \textbf{PROPOSAL}: Tool to propagate particles through media
         \begin{itemize}
           \item[$\rightarrow$] MC simulations, multivariate statistics
         \end{itemize}
         \item \textbf{Requirements:} Accuracy, performance
         \item \textbf{Processes:} Energy losses, scattering, decays
         \item Possibility to use \textbf{different parametrizations} 
-        \begin{itemize}
-        \item[$\rightarrow$] Study \textbf{systematic uncertainties}
-      \end{itemize}
         \item \CC library with Python bindings
       \end{itemize}
   \end{center}
@@ -135,6 +144,156 @@
   \end{columns}
 
 \end{frame}
+
+\begin{frame}{}
+\begin{center}
+\begin{tikzpicture}[node distance = 2.0cm, auto]
+    % Place nodes
+    \centering
+    \node [blocksmall] (one) {MMC};
+    \node [blocksmall, below of=one] (two) {PROPOSAL v1};
+    \node [blocksmall, below of=two] (three) {PROPOSAL v2};
+    \node [onlytext, right of=one, node distance=6cm] (repeat1) {JAVA};
+    \node [onlytext, right of=two, node distance=6cm] (repeat2) {\CC};
+    \node [onlytext, right of=three, node distance=6cm] (repeat3) {modern \CC, Polymorphism, \ldots};
+
+    % Draw edges
+    \path [line] (one) -- (two);
+    \path [line] (two) -- (three);
+
+
+\end{tikzpicture}
+\end{center}
+\end{frame}
+
+\section{PROPOSAL code structure} 
+
+
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(const ParticleDef&,
+	   const std::vector<Sector::Definition>&,
+	   const Geometry&,
+	   const InterpolationDef&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+	%\vspace*{-10px}
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item \texttt{Propagator} as base class to propagate a particle 
+      \item Objects owns all information necessary for Propagation
+
+    \end{itemize}
+\end{frame}
+
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(!\Hilight!const ParticleDef&,
+	   const std::vector<Sector::Definition>&,
+	   const Geometry&,
+	   const InterpolationDef&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item \texttt{ParticleDef} includes static information about particle
+      \item [$\rightarrow$] Range of particles available 
+      \item [$\rightarrow$] Modular structure: Simple creation of additional particles
+    \end{itemize}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(const ParticleDef&,
+	   !\Hilight!const std::vector<Sector::Definition>&,
+	   const Geometry&,
+	   const InterpolationDef&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item List of \texttt{Sector::Defintion} objects
+      \item [$\rightarrow$] \emph{Chain of resposibility}: Propagation of our particle through several sectors
+      \item [$\rightarrow$] Each \texttt{Sector} object is responsible for the propagation within its borders
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{table}[htpb]
+  \centering
+  \begin{tabular}{lp{10cm}}
+    \toprule
+    Parameter & Description \\
+    \midrule
+    \texttt{Medium} & Medium of the sector \\
+    \texttt{EnergyCutsSettings} & Stores $e_\text{cut}$ and $v_\text{cut}$ \\
+    \texttt{Geometry} & Geometry of the sector \\
+    \texttt{stopping\_decay} & Whether to force a final decay of the particle if its energy is $\leq e_\text{cut}$ \\
+    \texttt{cont\_rand} & Whether to use continuous randomization \\
+    \texttt{exact\_time} & Whether to calculate the time exactly out of the tracking integral or to use an approximation\\
+    \texttt{scattering\_model} & Choice of the multiple scattering model\\
+    \texttt{particle\_location} & Location of the particle \\
+    \texttt{utility\_def} & Definition of cross section parameters \\
+    \bottomrule
+  \end{tabular}
+  \label{tab:sector_def}
+\end{table}
+\texttt{Sector::Defintion} properties, adapted from \href{https://arxiv.org/abs/1809.07740}{arXiv:1809.07740}
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(const ParticleDef&,
+	   const std::vector<Sector::Definition>&,
+	   !\Hilight!const Geometry&,
+	   const InterpolationDef&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item Geometry describing the detector
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(const ParticleDef&,
+	   const std::vector<Sector::Definition>&,
+	   const Geometry&,
+	   !\Hilight!const InterpolationDef&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item \texttt{InterpolationDef} as an optional parameter
+      \item [$\rightarrow$] When used, calculated crosssections are saved in interpolation tables
+      \item [$\rightarrow$] Error of interpolation compared to integration: $\leq \num{e-5}$
+      \item [$\rightarrow$] Performance increased by several orders of magnitude
+    \end{itemize}
+\end{frame}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+Propagator(const ParticleDef&, const std::string&)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+    \begin{itemize}
+      \setlength\itemsep{0.5em}
+      \item Simple usage of a configuration (json) file is possible
+    \end{itemize}
+\end{frame}
+
+
+\appendix
+\section{Backup slides} 
+
+%%% Muon pair prodction
 
 
 \begin{frame}{Propagation}
@@ -234,13 +393,6 @@
 \end{figure}
 
 \end{frame}
-
-
-\appendix
-\section{Backup slides} 
-
-%%% Muon pair prodction
-
 
 
 \begin{frame}{Direct Production of Muon Pairs}
