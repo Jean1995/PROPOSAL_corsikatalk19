@@ -78,6 +78,12 @@
     text width=15em, text centered, rounded corners, minimum height=2em]
 \tikzstyle{block} = [rectangle, draw, fill=tugreen!20, 
     text width=20em, text centered, rounded corners, minimum height=2em]
+ \tikzstyle{blockH} = [rectangle, draw, fill=tugreen, 
+    text width=20em, text centered, rounded corners, minimum height=2em]
+\tikzstyle{smallblock} = [rectangle, draw, fill=tugreen!20, 
+    text width=14em, text centered, rounded corners, minimum height=2em]
+\tikzstyle{smallblockH} = [rectangle, draw, fill=tugreen, 
+    text width=14em, text centered, rounded corners, minimum height=2em]
 \tikzstyle{line} = [draw, -latex']
 \tikzstyle{cloud} = [draw, ellipse,fill=red!20, node distance=3cm,
     minimum height=2em]
@@ -279,7 +285,7 @@ Propagator(const ParticleDef&,
 
 \begin{frame}[fragile]
 \begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
-Propagator(const ParticleDef&, const std::string&)
+std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
 \end{lstlisting}
 	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
     \begin{itemize}
@@ -288,6 +294,212 @@ Propagator(const ParticleDef&, const std::string&)
     \end{itemize}
 \end{frame}
 
+\section{Propagation algorithm}
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+	\vspace*{10px}
+	\begin{tikzpicture}[node distance = 2.4cm, auto]
+    % Place nodes
+    \node [block] (one) {Choose next \texttt{Sector}};
+    \node [block, below of=one] (two) {Propagate in chosen \texttt{Sector} until \texttt{MaxDistance} reached or sector border reached };
+    \draw [->] (one) -- node[name=u] {} (two);
+
+    \node [decision, right of=u, node distance=7.5cm] (repeat) {Particle did not reach \texttt{MaxDistance}, did not decay, energy not below $e_\text{low}$};
+
+    % Draw edges
+
+    \path [line, dashed] (two) -| (repeat);
+    \path [line, dashed] (repeat) |- (one);
+	\end{tikzpicture}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+double Sector::Propagate(double distance)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+	\vspace*{10px}
+	\textbf{Remember:} Differentiate between continuous losses and stochastic losses !
+	\vspace*{-20px}
+	\begin{center}
+
+ 		\huge
+ 		\begin{align*}
+ 		    \underset{\text{continuous losses}}{v < v_\text{cut}} &&  \underset{\text{stochastic losses}}{v > v_\text{cut}}
+ 		\end{align*}\\
+ 		\vspace{20px}
+ 		\centering
+ 		  \Large
+ 		with $v_\text{cut} = \text{min}\left[\sfrac{e_\text{cut}}{E}, v\prime_\text{cut} \right]$
+
+	\end{center}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+double Sector::Propagate(double distance)
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+	\vspace*{10px}
+	\textbf{Remember:} Differentiate between continuous losses and stochastic losses !
+	\begin{center}
+	\begin{tikzpicture}[node distance=2cm]
+
+	% nodes
+	\node (A) at (2, 0) {};
+	\node[label={\small \text{stoch.}}] (B) at (4, 0) {$*$};
+	\node[label={\small \text{stoch.}}] (C) at (8, 0) {$*$};
+	\node[label={\small \text{stoch.}}] (D) at (12, 0) {$*$};
+	\node (E) at (14, 0) {};
+
+	
+	% arrows
+	\draw [dashed,->] (A) -- node[below] {} (B);
+	\draw [line] (B) -- node[below] {\text{continuous}} (C);
+	\draw [line] (C) -- node[below] {\text{continuous}} (D);
+	\draw [dashed,->] (D) -- node[below] {} (E);
+
+	
+	\end{tikzpicture}
+	\end{center}
+
+\end{frame}
+
+\begin{frame}[fragile]
+
+	\begin{tikzpicture}[node distance = 1.8cm, auto]
+    % Place nodes
+    \node [block] (one) {Sample energy when next interaction occurs (stochastic loss or decay)};
+    \onslide<2>{\node [blockH] (one) {Sample energy when next interaction occurs (stochastic loss or decay)};}
+
+    \node [block, below of=one] (two) {Calculate displacement until next interaction};
+    \onslide<3>{\node [blockH, below of=one] (two) {Calculate displacement until next interaction};}
+
+    \draw [line] (two) -- node[name=u] {} (three);
+    \node [block, below of=two] (three) {Calculate scattering};
+    \onslide<5>{\node [blockH, below of=two] (three) {Sample scattering};}
+    \node [block, below of=three] (four) {Continuous randomization};
+    \onslide<6>{\node [blockH, below of=three] (four) {Continuous randomization};}
+
+    \node [smallblock, right of=u, node distance=7.5cm] (repeat) {Calculate final energy\\ until sector border};
+    \onslide<4>{\node [smallblockH, right of=u, node distance=7.5cm] (repeat) {Calculate final energy\\ until sector border};}
+
+    % Draw edges
+    \path [line] (one) -- (two);
+    \path [line] (two) -| node[above] {\text{displacement overshoots border limit}} (repeat);
+    \path [line] (repeat) |- (three);
+    \path [line] (two) -- (three);
+    \path [line] (three) -- (four);
+
+	\end{tikzpicture}
+
+\end{frame}
+
+\begin{frame}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.85\textheight, trim=0.5cm 0.2cm 0.5cm 0.5cm,clip=true]{plots/mu_continuous_new.pdf}
+    \caption*{Propagation of $\num{e4}$ muons with energy $\SI{e8}{\mega\electronvolt}$ through $\SI{300}{\metre}$ of standard rock.}
+    \label{fig:1}
+\end{figure}
+\end{frame}
+
+
+\begin{frame}[fragile]
+
+	\begin{tikzpicture}[node distance = 1.8cm, auto]
+    % Place nodes
+    \node [block] (one) {Continuous randomization};
+
+    \node [smallblock, below of=one] (two) {Sample type of stochastic loss};
+    \onslide<3>{\node [smallblockH, below of=one] (two) {Sample type of stochastic loss};}
+
+
+    \node [smallblock, right of=two, node distance=7.5cm] (three) {Sample decay};
+    \onslide<2>{\node [smallblockH, right of=two, node distance=7.5cm] (three) {Sample decay};}
+
+
+    \node [smallblock, below of=two] (four) {Sample energy loss};
+    \onslide<4>{\node [smallblockH, below of=two] (four) {Sample energy loss};}
+
+    \node [block, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and particle not decayed};
+    \onslide<5>{\node [blockH, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and if particle has not decayed};}
+
+    % Draw edges
+    \path [line] (one) -- (two);
+    \path [line] (one) -| (three);
+    \path [line] (three) |- (five);
+    \path [line] (two) -- (four);
+    \path [line] (four) -- (five);
+
+	\end{tikzpicture}
+
+\end{frame}
+
+
+\begin{frame}[fragile]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
+\end{lstlisting}
+	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
+	\vspace*{10px}
+	\textbf{Return value:} List of \texttt{DynamicData} objects, including
+	\begin{enumerate}
+		\item Stochastic losses (type, energy, position, time, \ldots)
+		\item Decay particles
+		\item Produced particles
+		\item (Continuous losses)
+	\end{enumerate}
+\end{frame}
+
+\section{PROPOSAL changes for CORSIKA}
+
+\begin{frame}
+	\vspace{-10mm}
+	\begin{center}
+		\begin{align*}
+			-f\left(E\right) = \frac{\mathrm{d}E}{\mathrm{d}x}
+		\end{align*}
+	\end{center}
+	\vspace{-5mm}
+	\begin{columns}
+		\column{0.5\textwidth}
+			\begin{center}
+			\textbf{Homogeneous medium:}
+			\begin{align*}
+				-f\left(E\right) {\color{red}{}\rho_0} &= \frac{\mathrm{d}E}{\mathrm{d}x}\\
+				\mathrm{d}x &= -\frac{1}{{\color{red}{}\rho_0}} \frac{\mathrm{d}E}{f\left(E\right)}\\
+				x_f &= x_i - \frac{1}{{\color{red}{}\rho_0}} \int_{E_i}^{E_f} \frac{\mathrm{d}E}{f\left(E\right)}
+			\end{align*}
+			\end{center}
+		\column{0.5\textwidth}
+			\begin{center}
+			\textbf{Non-homogeneous medium}
+			\begin{align*}
+				-f\left(E\right) {\color{red}{}\rho\left(x\right)} &= \frac{\mathrm{d}E}{\mathrm{d}x}\\
+				\mathrm{d}x {\color{red}{}\rho\left(x\right)} &= -\frac{\mathrm{d}E}{f\left(E\right)}\\
+				\int_{x_f}^{x_i} \mathrm{d}x {\color{red}{}\rho\left(x\right)} &= -  \int_{E_i}^{E_f} \frac{\mathrm{d}E}{f\left(E\right)}
+			\end{align*}
+			\end{center}
+	\end{columns}
+		\begin{columns}
+		\column{0.5\textwidth}
+
+		\column{0.5\textwidth}
+			\begin{center}
+			solve for $x_f$
+			\end{center}
+	\end{columns}
+
+\end{frame}
 
 \appendix
 \section{Backup slides} 
