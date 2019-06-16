@@ -285,7 +285,8 @@ Propagator(const ParticleDef&,
 
 \begin{frame}[fragile]
 \begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
-std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
+Propagator::Propagator(const ParticleDef& particle_def, 
+                       const std::string& config_file)
 \end{lstlisting}
 	\textcolor{tugreen}{\rule{\textwidth}{1pt}}\\%
     \begin{itemize}
@@ -384,7 +385,7 @@ double Sector::Propagate(double distance)
     \onslide<3>{\node [blockH, below of=one] (two) {Calculate displacement until next interaction};}
 
     \draw [line] (two) -- node[name=u] {} (three);
-    \node [block, below of=two] (three) {Calculate scattering};
+    \node [block, below of=two] (three) {Sample scattering};
     \onslide<5>{\node [blockH, below of=two] (three) {Sample scattering};}
     \node [block, below of=three] (four) {Continuous randomization};
     \onslide<6>{\node [blockH, below of=three] (four) {Continuous randomization};}
@@ -430,8 +431,8 @@ double Sector::Propagate(double distance)
     \node [smallblock, below of=two] (four) {Sample energy loss};
     \onslide<4>{\node [smallblockH, below of=two] (four) {Sample energy loss};}
 
-    \node [block, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and particle not decayed};
-    \onslide<5>{\node [blockH, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and if particle has not decayed};}
+    \node [block, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and particle has not decayed};
+    \onslide<5>{\node [blockH, below of=four] (five) {Repeat algorithm if $E > e_\text{low}$ and particle has not decayed};}
 
     % Draw edges
     \path [line] (one) -- (two);
@@ -461,6 +462,7 @@ std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
 \end{frame}
 
 \begin{frame}[fragile]
+  \vspace{-10mm}
 \begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
 Propagator prop(MuMinusDef::Get(), "resources/config.json");
 Particle& mu = prop.GetParticle();
@@ -481,6 +483,7 @@ for (int i = 0; i < 10; i++){
 \end{frame}
 
 \begin{frame}[fragile]
+  \vspace{-10mm}
 \begin{lstlisting}[language=python,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
 prop = pp.Propagator(particle_def=pp.particle.MuMinusDef.get(), 
 		     config_file="path/to/config.json")
@@ -503,7 +506,7 @@ for i in range(10):
 
 \section{PROPOSAL changes for CORSIKA}
 
-\begin{frame}
+\begin{frame}{Displacement calculation}
 	\vspace{-10mm}
 	\begin{center}
 		\begin{align*}
@@ -541,6 +544,36 @@ for i in range(10):
 	\end{columns}
 
 \end{frame}
+
+\begin{frame}[t]
+  \vspace{-5mm}
+  \begin{minipage}[t][0.8\textheight][t]{\textwidth}
+      \begin{columns}
+    \column{0.5\textwidth}
+      \begin{figure}
+          \centering
+          \includegraphics[width=0.6\linewidth]{plots/github.pdf}
+           \captionsetup{format=myformat}
+          \caption*{https://github.com/tudo-\\astroparticlephysics/PROPOSAL}
+      \end{figure}
+    \column{0.5\textwidth}
+      \begin{figure}
+          \centering
+          \includegraphics[width=0.6\linewidth]{plots/arxiv.pdf}
+          \captionsetup{format=myformat}
+          \caption*{https://arxiv.org/abs/1809.07740 \\ \phantom{astroparticlephysics/PROPOSAL}}
+      \end{figure}
+  \end{columns}
+  \end{minipage}
+  \vfill
+  \begin{minipage}{\textwidth}
+      \smaller
+      \begin{center}
+      PROPOSAL may be modified and distrubuted under terms of a modified LGPL license.\\More information on our GitHub page.
+      \end{center}
+  \end{minipage}
+\end{frame}
+\end{document}
 
 \appendix
 \section{Backup slides} 
