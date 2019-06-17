@@ -475,7 +475,7 @@ std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
 
 \begin{frame}[fragile]
   \vspace{-10mm}
-\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
 Propagator prop(MuMinusDef::Get(), "resources/config.json");
 Particle& mu = prop.GetParticle();
 Particle mu_backup(mu);
@@ -496,7 +496,7 @@ for (int i = 0; i < 10; i++){
 
 \begin{frame}[fragile]
   \vspace{-10mm}
-\begin{lstlisting}[language=python,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+\begin{lstlisting}[language=python,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
 prop = pp.Propagator(particle_def=pp.particle.MuMinusDef.get(), 
 		     config_file="path/to/config.json")
 mu = prop.particle
