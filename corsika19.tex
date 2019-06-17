@@ -207,8 +207,11 @@ Propagator(!\Hilight!const ParticleDef&,
       \setlength\itemsep{0.5em}
       \item \texttt{ParticleDef} includes static information about particle
       \item [$\rightarrow$] Wide range of predefined particles available 
-      \item [$\rightarrow$] Modular structure: Simple creation of additional particles
+      \item [$\rightarrow$] Modular structure: Simple creation of additional particles:
     \end{itemize}
+\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
+    ParticleDef new_mu = ParticleDef::Builder().SetMass(1000).build();
+\end{lstlisting}
 \end{frame}
 
 
@@ -293,6 +296,15 @@ Propagator::Propagator(const ParticleDef& particle_def,
       \setlength\itemsep{0.5em}
       \item Simple usage of a configuration (json) file is possible
     \end{itemize}
+\end{frame}
+
+\begin{frame}
+\begin{figure}
+    \centering
+    \includegraphics[height=0.99\textheight]{plots/config.png}
+    %\caption*{Propagation of $\num{e4}$ muons with energy $\SI{e8}{\mega\electronvolt}$ through $\SI{300}{\metre}$ of standard rock.}
+    \label{fig:1}
+\end{figure}
 \end{frame}
 
 \section{Propagation algorithm}
