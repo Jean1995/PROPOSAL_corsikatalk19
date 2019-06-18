@@ -137,6 +137,7 @@
         \item \textbf{Requirements:} Accuracy, performance
         \item \textbf{Processes:} Energy losses, scattering, decays
         \item \CC library with Python bindings
+        \item GitHub, UnitTests (Travis CI), \ldots
       \end{itemize}
   \end{center}
   \column{0.35\textwidth}
@@ -512,7 +513,7 @@ std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
 	\textbf{Return value:} List of \texttt{DynamicData} objects, including
 	\begin{enumerate}
 		\item Stochastic losses (type, energy, position, time, \ldots)
-		\item Decay particles
+		\item Decay particles (no redundant static information!)
 		\item Produced particles (e.g. muon pair)
 		\item (Continuous losses)
 	\end{enumerate}
