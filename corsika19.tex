@@ -241,9 +241,9 @@ Propagator(const ParticleDef&,
     \texttt{Medium} & Medium of the sector \\
     \texttt{EnergyCutsSettings} & Stores $e_\text{cut}$ and $v_\text{cut}$ \\
     \texttt{Geometry} & Geometry of the sector \\
-    \texttt{stopping\_decay} & Whether to force a final decay of the particle if its energy is $\leq e_\text{cut}$ \\
+    \texttt{stopping\_decay} & Whether to force a final decay of the particle if its energy is $\leq e_\text{low}$ \\
     \texttt{cont\_rand} & Whether to use continuous randomization \\
-    \texttt{exact\_time} & Whether to calculate the time exactly out of the tracking integral or to use an approximation\\
+    \texttt{exact\_time} & Whether to calculate the time exactly out of the tracking integral or to use $v=c$ as an approximation\\
     \texttt{scattering\_model} & Choice of the multiple scattering model\\
     \texttt{particle\_location} & Location of the particle \\
     \texttt{utility\_def} & Definition of cross section parameters \\
@@ -266,6 +266,7 @@ Propagator(const ParticleDef&,
     \begin{itemize}
       \setlength\itemsep{0.5em}
       \item Geometry describing the detector
+      \item Different options for particle infront / inside / below the detector volume
     \end{itemize}
 \end{frame}
 
@@ -280,7 +281,7 @@ Propagator(const ParticleDef&,
     \begin{itemize}
       \setlength\itemsep{0.5em}
       \item \texttt{InterpolationDef} as an optional parameter
-      \item [$\rightarrow$] When used, calculated crosssections are saved in interpolation tables
+      \item [$\rightarrow$] When used, calculated crosssections (and several derived values) are saved in interpolation tables
       \item [$\rightarrow$] Error of interpolation compared to integration: $\leq \num{e-5}$
       \item [$\rightarrow$] Performance increased by several orders of magnitude
     \end{itemize}
@@ -298,13 +299,57 @@ Propagator::Propagator(const ParticleDef& particle_def,
     \end{itemize}
 \end{frame}
 
-\begin{frame}
-\begin{figure}
-    \centering
-    \includegraphics[height=0.99\textheight]{plots/config.png}
-    %\caption*{Propagation of $\num{e4}$ muons with energy $\SI{e8}{\mega\electronvolt}$ through $\SI{300}{\metre}$ of standard rock.}
-    \label{fig:1}
-\end{figure}
+\begin{frame}[fragile]
+  \vspace{-5mm}
+  \begin{minipage}[t][\textheight][t]{\textwidth}
+      \begin{columns}
+    \column{0.5\textwidth}
+      \begin{lstlisting}[language=C++,basicstyle=\footnotesize\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
+{
+  "global":
+  {
+    "seed" : 1,
+    "continous_loss_output" : false,
+    "only_loss_inside_detector" : false,
+
+    "interpolation":
+    {
+      "do_interpolation" : true,
+      "path_to_tables" : ["resources/tables"],
+    },
+
+    "exact_time" : true,
+    "stopping_decay" : true,
+    "scattering" : "Highland",
+
+    "brems" : "BremsAndreevBezrukovBugaev",
+    "photo" : "PhotoButkevichMikhailov",
+
+\end{lstlisting}
+    \column{0.5\textwidth}
+     \begin{lstlisting}[language=C++,basicstyle=\footnotesize\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt, firstnumber=20]
+    "lpm" : false,
+    "photo_hard_component" : true,
+    "photo_shadow" : "ShadowButkevichMikhailov",
+  },
+
+  "sectors": [
+    {
+      "hierarchy": 0,
+      "medium": "ice",
+      "density_correction": 1,
+
+      "geometry":
+      {
+        "shape": "sphere",
+        "origin": [0, 0, 0],
+        "outer_radius": 6374134000000,
+        "inner_radius": 0
+      },
+      ...
+\end{lstlisting}
+  \end{columns}
+  \end{minipage}
 \end{frame}
 
 \section{Propagation algorithm}
@@ -449,7 +494,7 @@ double Sector::Propagate(double distance)
     % Draw edges
     \path [line] (one) -- (two);
     \path [line] (one) -| (three);
-    \path [line] (three) |- (five);
+    %\path [line] (three) |- (five);
     \path [line] (two) -- (four);
     \path [line] (four) -- (five);
 
@@ -468,14 +513,15 @@ std::vector<DynamicData*> Propagator::Propagate(double MaxDistance_cm);
 	\begin{enumerate}
 		\item Stochastic losses (type, energy, position, time, \ldots)
 		\item Decay particles
-		\item Produced particles
+		\item Produced particles (e.g. muon pair)
 		\item (Continuous losses)
 	\end{enumerate}
 \end{frame}
 
 \begin{frame}[fragile]
   \vspace{-10mm}
-\begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
+\frametitle{\CC code example}
+\begin{lstlisting}[language=C++,basicstyle=\small\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
 Propagator prop(MuMinusDef::Get(), "resources/config.json");
 Particle& mu = prop.GetParticle();
 Particle mu_backup(mu);
@@ -490,13 +536,13 @@ for (int i = 0; i < 10; i++){
     prop.Propagate();  
     ranges.push_back(mu.GetPropagatedDistance());
 }
-// ...
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]
   \vspace{-10mm}
-\begin{lstlisting}[language=python,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
+\frametitle{Python code example}
+\begin{lstlisting}[language=python,basicstyle=\small\ttfamily,keywordstyle=\color{red}, escapechar=\!, numbers=left, numberstyle=\tiny\ttfamily, numbersep=5pt]
 prop = pp.Propagator(particle_def=pp.particle.MuMinusDef.get(), 
 		     config_file="path/to/config.json")
 mu = prop.particle
@@ -522,7 +568,7 @@ for i in range(10):
 	\vspace{-10mm}
 	\begin{center}
 		\begin{align*}
-			-f\left(E\right) = \frac{\mathrm{d}E}{\mathrm{d}x}
+			-f\left(E\right) = \sum_{\text{crosssec.}} \sum_{\text{comp.}} \frac{\mathrm{d}E}{\mathrm{d}x}
 		\end{align*}
 	\end{center}
 	\vspace{-5mm}
