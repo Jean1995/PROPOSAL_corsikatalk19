@@ -208,10 +208,10 @@ Propagator(!\Hilight!const ParticleDef&,
       \setlength\itemsep{0.5em}
       \item \texttt{ParticleDef} includes static information about particle
       \item [$\rightarrow$] Wide range of predefined particles available 
-      \item [$\rightarrow$] Modular structure: Simple creation of additional particles:
+      \item [$\rightarrow$] Simple creation of additional particles:
     \end{itemize}
 \begin{lstlisting}[language=C++,basicstyle=\ttfamily,keywordstyle=\color{red}, escapechar=\!]
-    ParticleDef new_mu = ParticleDef::Builder().SetMass(1000).build();
+    ParticleDef new_particle = ParticleDef::Builder().SetMass(1000).build();
 \end{lstlisting}
 \end{frame}
 
@@ -267,7 +267,7 @@ Propagator(const ParticleDef&,
     \begin{itemize}
       \setlength\itemsep{0.5em}
       \item Geometry describing the detector
-      \item Different options for particle infront / inside / below the detector volume
+      \item Different options for particle infront / inside / behind the detector volume
     \end{itemize}
 \end{frame}
 
